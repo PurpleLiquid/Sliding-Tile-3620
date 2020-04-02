@@ -3,6 +3,7 @@
 #include <vector>
 #include <exception>
 #include <queue>
+#include <algorithm>
 #include <cstdlib>
 #include <bits/stdc++.h>
 
@@ -22,7 +23,7 @@ struct NumPoint {
 
 struct CompareNums {
 	bool operator()(const NumPoint & n1, const NumPoint & n2) {
-		return (n1.num > n2.num);
+		return (n1.num < n2.num);
 	}
 };
 
@@ -47,7 +48,7 @@ class Board_Tile {
 		int numMoves();
 		int Manhattan_Distance(const Board_Tile& goalconfig);
 		
-		std::priority_queue<NumPoint, std::vector<NumPoint>, CompareNums> elementQueue;
+		std::vector<NumPoint> elements;
 		
 	private:
 		std::string config[3][3];

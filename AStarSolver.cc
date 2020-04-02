@@ -3,6 +3,7 @@
 #include <vector>
 #include <exception>
 #include <queue>
+#include <algorithm>
 #include <cstdlib>
 #include <bits/stdc++.h>
 #include "AStarSolver.h"
@@ -54,21 +55,64 @@ Board_Tile::Board_Tile(const std::string& str) {
 				.y = y
 			};
 			
-			elementQueue.push(n);
+			elements.push_back(n);
 			indl++;
 		}
 	}
+	
+	std::sort(elements.begin(), elements.end(), CompareNums());
 }
 
+/*void Board_Tile::move(char direction) {
+	// Should be zero
+	NumPoint blankPoint = elementQueue.top();
+	elementQueue.pop();
+	
+	int initX = blankPoint.x;
+	int initY = blankPoint.y;
+	
+	int targetX, targetY;
+	
+	switch (direction){
+		case 'u':
+			targetX = initX;
+			targetY = inity - 1;
+			break;
+		case 'd':
+			targetX = initX;
+			targetY = inity + 1;
+			break;
+		case 'r':
+			targetX = initX + 1;
+			targetY = inity;
+			break;
+		case 'l':
+			targetX = initX - 1;
+			targetY = inity;
+			break;
+	}
+	
+	std::string targetElement = config[targetX][targetY];
+	
+	config[targetX][targetY] = "0";
+	config[initX][initY] = targetElement;
+	
+	// Re-add to priority_queue
+	NumPoint n = {
+		.x = targetX,
+		.y = targetY
+	};
+	
+	elementQueue.push(n);
+}*/
+
 int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
-	std::priority_queue<NumPoint, std::vector<NumPoint>, CompareNums> goalEle = goalconfig.elementQueue;
+	std::vector<NumPoint> goalEle = goalconfig.elements;
 	int sum = 0;
 	
 	for(int i = 1; i < 9; i++) {
-		NumPoint initN = Board_Tile::elementQueue.top();
-		Board_Tile::elementQueue.pop();
-		NumPoint goalN = goalEle.top();
-		goalEle.pop();
+		NumPoint initN = elements.at(i);
+		NumPoint goalN = goalEle.at(i);
 		
 		sum += (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
 		
@@ -124,7 +168,7 @@ int main() {
 	}
 	
 	std::cout << "Processing..." << std::endl;
-	initBt.Manhattan_Distance(goalBt);
+	std::cout << "Sum: " << initBt.Manhattan_Distance(goalBt) << std::endl;
 	
 	return 0;
 }
