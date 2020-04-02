@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <list>
-#include <iterator>
+#include <exception>
+#include <queue>
+#include <cstdlib>
+#include <bits/stdc++.h>
 #include "AStarSolver.h"
 
 std::vector<std::string> StringMagician::extractInts(const std::string str) {
@@ -20,6 +22,12 @@ std::vector<std::string> StringMagician::extractInts(const std::string str) {
 	}
 	
 	results.push_back(newStr); // Get last string
+	
+	if(results.size() != 9) {
+		std::cout << results.size() << std::endl;
+		throw NotConfig();
+	}
+	
 	return results;
 }
 
@@ -29,42 +37,46 @@ void StringMagician::printAll(std::vector<std::string> aList) {
 	}
 }
 
-void BinaryHeap::insert(std::string str) {
-	if(BinaryHeap::currentSize == BinaryHeap::heap.size() - 1) {
-		BinaryHeap::heap.resize(BinaryHeap::heap.size() * 2);
-	}
-	
-	// Percolate Up
-	int hole = BinaryHeap::currentSize++;
-	std::string temp = "";
-	std::string copy = str;
-	BinaryHeap::heap.push_back(copy);
-	
-	for(; std::stoi(str) < std::stoi(BinaryHeap::heap[hole/2]); hole /= 2) {
-		temp = BinaryHeap::heap[hole/2];
-		BinaryHeap::heap[hole/2] = BinaryHeap::heap[hole];
-		BinaryHeap::heap[hole] = temp;
-	}
-}
-
-void BinaryHeap::printAll() {
-	for(int i = 0; i < BinaryHeap::heap.size(); i++) {
-		std::cout << BinaryHeap::heap[i] << std::endl;
-	}
-}
-
 Board_Tile::Board_Tile(const std::string& str) {
 	StringMagician sm;
 	
+	// If exception occurs should terminate program
 	std::vector<std::string> ints = sm.extractInts(str);
 	int indl = 0;
 	
-	for(int i = 0; i < 3; i++) {
-		for(int j = 0; j < 3; j++) {
-			Board_Tile::config[i][j] = ints[indl];
+	for(int y = 0; y < 3; y++) {
+		for(int x = 0; x < 3; x++) {
+			Board_Tile::config[y][x] = ints[indl];
+			
+			NumPoint n = {
+				.num = std::stoi(ints.at(indl)),
+				.x = x,
+				.y = y
+			};
+			
+			elementQueue.push(n);
 			indl++;
 		}
 	}
+}
+
+int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
+	std::priority_queue<NumPoint, std::vector<NumPoint>, CompareNums> goalEle = goalconfig.elementQueue;
+	int sum = 0;
+	
+	for(int i = 0; i < 9; i++) {
+		NumPoint initN = Board_Tile::elementQueue.top();
+		Board_Tile::elementQueue.pop();
+		NumPoint goalN = goalEle.top();
+		goalEle.pop();
+		
+		sum += (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
+	}
+	
+	// Formula is D(C) = A(C) + E(C)
+	// in other words
+	// Manhattan_Distance = 0 + sum of distance of all displaced tiles to their target
+	return sum;
 }
 
 int main() {
@@ -74,22 +86,43 @@ int main() {
 	std::string input = "";
 	bool stop = false;
 	
-	std::vector<std::string> test;
+	Board_Tile initBt;
+	Board_Tile goalBt;
 	
+	// First Prompt
 	while(!stop) {
-		std::cout << "Please enter a 3x3 configuration: ";
+		std::cout << "Please enter an initial 3x3 configuration: ";
 		std::getline(std::cin, input);
 		
 		if(input == "Q" || input == "q") {
 			stop = true;
 			return 0;
-		} else if(input == "print" || input == "PRINT" || input == "Print") {
-			// For testing purposes
-			// bh.printAll();
 		} else {
-			Board_Tile bt(input);
+			Board_Tile tempBt(input);
+			initBt = tempBt;
+			stop = true;
 		}
 	}
+	
+	stop = false;
+	
+	// Second Prompt
+	while(!stop) {
+		std::cout << "Please enter a goal 3x3 configuration: ";
+		std::getline(std::cin, input);
+		
+		if(input == "Q" || input == "q") {
+			stop = true;
+			return 0;
+		} else {
+			Board_Tile tempBt(input);
+			goalBt = tempBt;
+			stop = true;
+		}
+	}
+	
+	std::cout << "Processing..." << std::endl;
+	initBt.Manhattan_Distance(goalBt);
 	
 	return 0;
 }

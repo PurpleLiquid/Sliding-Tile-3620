@@ -1,8 +1,30 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <list>
-#include <iterator>
+#include <exception>
+#include <queue>
+#include <cstdlib>
+#include <bits/stdc++.h>
+
+struct NotConfig : public std::exception {
+	const char * what () const throw () {
+    	return "Not a 3x3 Configuration";
+    }
+};
+
+struct NumPoint {
+	int num, x, y;
+	
+	NumPoint() {}
+	NumPoint(int theNum, int numX, int numY)
+						: num{theNum}, x{numX}, y{numY} {}
+};
+
+struct CompareNums {
+	bool operator()(const NumPoint & n1, const NumPoint & n2) {
+		return (n1.num > n2.num);
+	}
+};
 
 class StringMagician {
 	public:
@@ -25,23 +47,19 @@ class Board_Tile {
 		int numMoves();
 		int Manhattan_Distance(const Board_Tile& goalconfig);
 		
+		std::priority_queue<NumPoint, std::vector<NumPoint>, CompareNums> elementQueue;
+		
 	private:
 		std::string config[3][3];
 		std::string movesFromStart = "";
+		
 };
 
-class BinaryHeap {
-	public:
-		BinaryHeap() {}
-		
-		virtual ~BinaryHeap() {}
-		void insert(std::string str);
-		void printAll();
-	
-	private:
-		int currentSize = 0;
-		std::vector<std::string> heap;
-};
+/*struct CompareConfig {
+	bool operator()(const Board_Tile & b1, const Board_Tile & b2) {
+		return (b1.)
+	}
+};*/
 
 class Sliding_Solver {
 	public:
@@ -52,5 +70,5 @@ class Sliding_Solver {
 		void Solve_Puzzle();
 		
 	private:
-		
+		//std::priority_queue<Board_Tile> tileQueue;
 };
