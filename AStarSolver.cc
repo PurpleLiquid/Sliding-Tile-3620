@@ -64,13 +64,15 @@ int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
 	std::priority_queue<NumPoint, std::vector<NumPoint>, CompareNums> goalEle = goalconfig.elementQueue;
 	int sum = 0;
 	
-	for(int i = 0; i < 9; i++) {
+	for(int i = 1; i < 9; i++) {
 		NumPoint initN = Board_Tile::elementQueue.top();
 		Board_Tile::elementQueue.pop();
 		NumPoint goalN = goalEle.top();
 		goalEle.pop();
 		
 		sum += (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
+		
+		std::cout << goalN.num << " " << (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y)) << std::endl;
 	}
 	
 	// Formula is D(C) = A(C) + E(C)
