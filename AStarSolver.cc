@@ -3,40 +3,12 @@
 #include <vector>
 #include <exception>
 #include <queue>
+#include <map>
+#include <iterator>
 #include <algorithm>
 #include <cstdlib>
 #include <bits/stdc++.h>
 #include "AStarSolver.h"
-
-std::vector<std::string> StringMagician::extractInts(const std::string str) {
-	std::vector<std::string> results;
-	
-	std::string newStr = "";
-	
-	for(int i = 0; i < str.length(); i++) {
-		if(std::isdigit(str[i])) {
-			newStr += str[i];
-		} else {
-			results.push_back(newStr);
-			newStr = "";
-		}
-	}
-	
-	results.push_back(newStr); // Get last string
-	
-	if(results.size() != 9) {
-		std::cout << results.size() << std::endl;
-		throw NotConfig();
-	}
-	
-	return results;
-}
-
-void StringMagician::printAll(std::vector<std::string> aList) {
-	for(int i = 0; i < aList.size(); i++) {
-		std::cout << aList[i] << std::endl;
-	}
-}
 
 Board_Tile::Board_Tile(const std::string& str) {
 	StringMagician sm;
@@ -60,51 +32,55 @@ Board_Tile::Board_Tile(const std::string& str) {
 		}
 	}
 	
+	// should be sorted from least to greatest
+	// i.e. from 0 to 8
 	std::sort(elements.begin(), elements.end(), CompareNums());
 }
 
-/*void Board_Tile::move(char direction) {
-	// Should be zero
-	NumPoint blankPoint = elementQueue.top();
-	elementQueue.pop();
+int Board_Tile::numMoves() {
+	return Board_Tile::numOfMoves;
+}
+
+std::vector<Board_Tile> Board_Tile::nextConfigs() {
+	// Will check for possible moves
+	NumPoint blankPoint = elements.at(0);
 	
 	int initX = blankPoint.x;
 	int initY = blankPoint.y;
 	
-	int targetX, targetY;
+	std::string availableMoves;
 	
-	switch (direction){
-		case 'u':
-			targetX = initX;
-			targetY = inity - 1;
-			break;
-		case 'd':
-			targetX = initX;
-			targetY = inity + 1;
-			break;
-		case 'r':
-			targetX = initX + 1;
-			targetY = inity;
-			break;
-		case 'l':
-			targetX = initX - 1;
-			targetY = inity;
-			break;
+	// All situations
+	if(initX == 0 && initY == 0) { // 0 is at top-left
+		availableMoves = "DR"; // Down and Right
+	} else if(initX == 1 && initY == 0) { // 0 is top-middle
+		availableMoves = "DRL"; // Down, Left, and Right
+	} else if(initX == 2 && initY == 0) { // 0 is top-right
+		availableMoves = "DL"; // Down and Left
+	} else if(initX == 0 && initY == 1) { // 0 is middle-left
+		availableMoves = "UDR"; // Up, Down, and Right
+	} else if(initX == 2 && initY == 1) { // 0 is middle-right
+		availableMoves = "UDL"; // Up, Down, and Left
+	} else if(initX == 0 && initY == 2) { // 0 is bottom-left
+		availableMoves = "UR"; // Up and Right
+	} else if(initX == 1 && initY == 2) { // 0 is bottom-middle
+		availableMoves = "URL"; // Up, Left, and Right
+	} else if(initX == 2 && initY == 2) { // 0 is bottom-right
+		availableMoves = "UL"; // Up and Left
+	} else { // 0 is in the middle
+		availableMoves = "UDRL"; // unrestricted
 	}
 	
-	std::string targetElement = config[targetX][targetY];
+	std::vector<Board_Tile> possibleMoves;
+	for(int i = 0; i < availableMoves.size(); i++) {
+		Board_Tile possibleConfig(getCurrentConfigString());
+		possibleConfig.setMoves(numOfMoves)
+		possibleConfig.move(availableMoves.at(i));
+		possibleMoves.push_back(possibleConfig);
+	}
 	
-	config[targetX][targetY] = "0";
-	config[initX][initY] = targetElement;
-	
-	// Re-add to priority_queue
-	NumPoint n = {
-		.x = targetX,
-		.y = targetY
-	};
-	
-	elementQueue.push(n);
-}*/
+	return possibleMoves;
+} 
 
 int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
 	std::vector<NumPoint> goalEle = goalconfig.elements;
@@ -114,15 +90,109 @@ int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
 		NumPoint initN = elements.at(i);
 		NumPoint goalN = goalEle.at(i);
 		
-		sum += (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
+		sum += numMoves() + (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
 		
 		std::cout << goalN.num << " " << (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y)) << std::endl;
 	}
 	
 	// Formula is D(C) = A(C) + E(C)
 	// in other words
-	// Manhattan_Distance = 0 + sum of distance of all displaced tiles to their target
+	// Manhattan_Distance = (Moves needed/moves already taken) + (sum of distance of all displaced tiles to their target)
 	return sum;
+}
+
+// Extra functions
+void Board_Tile::move(char direction) {
+	// Should be zero
+	NumPoint blankPoint = elements.at(0);
+	
+	int initX = blankPoint.x;
+	int initY = blankPoint.y;
+	
+	int targetX, targetY;
+	
+	switch (direction){
+		case 'u':
+		case 'U':
+			targetX = initX;
+			targetY = initY - 1;
+			break;
+		case 'd':
+		case 'D':
+			targetX = initX;
+			targetY = initY + 1;
+			break;
+		case 'r':
+		case 'R':
+			targetX = initX + 1;
+			targetY = initY;
+			break;
+		case 'l':
+		case 'L':
+			targetX = initX - 1;
+			targetY = initY;
+			break;
+	}
+	
+	std::string targetElement = config[targetY][targetX];
+	
+	// Just in case
+	if(targetX < 0) {
+		targetX = 0;
+	} else if(targetX > 2) {
+		targetX = 2;
+	}
+	
+	if(targetY < 0) {
+		targetY = 0;
+	} else if(targetY > 2) {
+		targetY = 2;
+	}
+	
+	// Replace
+	config[targetY][targetX] = "0";
+	config[initY][initX] = targetElement;
+	
+	// Re-add to priority_queue
+	NumPoint zeroN = {
+		.num = 0,
+		.x = targetX,
+		.y = targetY
+	};
+	
+	NumPoint targetN = {
+		.num = std::stoi(targetElement),
+		.x = initX,
+		.y = initY
+	};
+	
+	elements[0] = zeroN;
+	elements[std::stoi(targetElement)] = targetN;
+	numOfMoves++;
+}
+
+std::string Board_Tile::getMoves() {
+	return Board_Tile::movesFromStart;
+}
+
+std::string Board_Tile::getCurrentConfigString() {
+	std::string currentConfig = "";
+	
+	for(int y = 0; y < 3; y++) {
+		for(int x = 0; x < 3; x++) {
+			if(x == 2 && y == 2) {
+				currentConfig += config[y][x];
+			} else {
+				currentConfig += config[y][x] + " ";
+			}
+		}
+	}
+	
+	return currentConfig;
+}
+
+void Board_Tile::setMoves(int m) {
+	numOfMove = m;
 }
 
 int main() {
@@ -168,7 +238,42 @@ int main() {
 	}
 	
 	std::cout << "Processing..." << std::endl;
-	std::cout << "Sum: " << initBt.Manhattan_Distance(goalBt) << std::endl;
+	std::vector<Board_Tile> result = initBt.nextConfigs();
+	
+	for(int i = 0; i < result.size(); i++) {
+		Board_Tile t = result.at(i);
+		std::cout << t.getCurrentConfigString() << std::endl;
+	}
 	
 	return 0;
+}
+
+std::vector<std::string> StringMagician::extractInts(const std::string str) {
+	std::vector<std::string> results;
+	
+	std::string newStr = "";
+	
+	for(int i = 0; i < str.length(); i++) {
+		if(std::isdigit(str[i])) {
+			newStr += str[i];
+		} else {
+			results.push_back(newStr);
+			newStr = "";
+		}
+	}
+	
+	results.push_back(newStr); // Get last string
+	
+	if(results.size() != 9) {
+		std::cout << results.size() << std::endl;
+		throw NotConfig();
+	}
+	
+	return results;
+}
+
+void StringMagician::printAll(std::vector<std::string> aList) {
+	for(int i = 0; i < aList.size(); i++) {
+		std::cout << aList[i] << std::endl;
+	}
 }

@@ -3,6 +3,8 @@
 #include <vector>
 #include <exception>
 #include <queue>
+#include <map>
+#include <iterator>
 #include <algorithm>
 #include <cstdlib>
 #include <bits/stdc++.h>
@@ -44,9 +46,14 @@ class Board_Tile {
 		virtual ~Board_Tile() {}
 		Board_Tile(const std::string& str);
 		
-		std::list<Board_Tile> nextConfigs();
+		std::vector<Board_Tile> nextConfigs();
 		int numMoves();
 		int Manhattan_Distance(const Board_Tile& goalconfig);
+		
+		void setMoves(int m);
+		std::string getMoves();
+		std::string getCurrentConfigString();
+		void move(char direction);
 		
 		std::vector<NumPoint> elements;
 		
@@ -54,13 +61,19 @@ class Board_Tile {
 		std::string config[3][3];
 		std::string movesFromStart = "";
 		
+		int numOfMoves = 0;
+		
+		// add 'U', 'D', 'R', or 'L'
+		// each letter stands for Up, Down, Right, and Left respectively
+		std::string movesTaken = "";
+		
 };
 
-/*struct CompareConfig {
-	bool operator()(const Board_Tile & b1, const Board_Tile & b2) {
-		return (b1.)
+struct CompareConfig {
+	bool operator()(Board_Tile & b1, Board_Tile & b2) {
+		return (b1.numMoves() > b2.numMoves());
 	}
-};*/
+};
 
 class Sliding_Solver {
 	public:
@@ -71,5 +84,5 @@ class Sliding_Solver {
 		void Solve_Puzzle();
 		
 	private:
-		//std::priority_queue<Board_Tile> tileQueue;
+		std::priority_queue<Board_Tile, std::vector<Board_Tile>, CompareConfig> tileQueue;
 };
