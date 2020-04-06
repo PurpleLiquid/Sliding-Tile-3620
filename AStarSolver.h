@@ -2,8 +2,8 @@
 #include <string>
 #include <vector>
 #include <exception>
+#include <stack>
 #include <queue>
-#include <map>
 #include <iterator>
 #include <algorithm>
 #include <cstdlib>
@@ -50,12 +50,13 @@ class Board_Tile {
 		int numMoves();
 		int Manhattan_Distance(const Board_Tile& goalconfig);
 		
-		void setMoves(int m);
+		void setMoves(int numM, std::string m);
 		std::string getMoves();
 		std::string getCurrentConfigString();
 		void move(char direction);
 		
 		std::vector<NumPoint> elements;
+		int dScore = 0;
 		
 	private:
 		std::string config[3][3];
@@ -71,15 +72,15 @@ class Board_Tile {
 
 struct CompareConfig {
 	bool operator()(Board_Tile & b1, Board_Tile & b2) {
-		return (b1.numMoves() > b2.numMoves());
+		return (b1.dScore > b2.dScore);
 	}
 };
 
 class Sliding_Solver {
 	public:
-		Sliding_Solver() {}
+		Sliding_Solver() {} // Never instantiate an empty Sliding_Solver
 		virtual ~Sliding_Solver() {}
-		Sliding_Solver(const std::string&);
+		Sliding_Solver(const std::string& str);
 		
 		void Solve_Puzzle();
 		

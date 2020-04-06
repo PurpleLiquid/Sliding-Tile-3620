@@ -2,14 +2,15 @@
 #include <string>
 #include <vector>
 #include <exception>
+#include <stack>
 #include <queue>
-#include <map>
 #include <iterator>
 #include <algorithm>
 #include <cstdlib>
 #include <bits/stdc++.h>
 #include "AStarSolver.h"
 
+// Requested Functions
 Board_Tile::Board_Tile(const std::string& str) {
 	StringMagician sm;
 	
@@ -35,6 +36,12 @@ Board_Tile::Board_Tile(const std::string& str) {
 	// should be sorted from least to greatest
 	// i.e. from 0 to 8
 	std::sort(elements.begin(), elements.end(), CompareNums());
+}
+
+Sliding_Solver::Sliding_Solver(const std::string& str) {
+	// First node
+	Board_Tile bt(str);
+	tileQueue.push(bt);
 }
 
 int Board_Tile::numMoves() {
@@ -74,7 +81,7 @@ std::vector<Board_Tile> Board_Tile::nextConfigs() {
 	std::vector<Board_Tile> possibleMoves;
 	for(int i = 0; i < availableMoves.size(); i++) {
 		Board_Tile possibleConfig(getCurrentConfigString());
-		possibleConfig.setMoves(numOfMoves)
+		possibleConfig.setMoves(numOfMoves, movesFromStart);
 		possibleConfig.move(availableMoves.at(i));
 		possibleMoves.push_back(possibleConfig);
 	}
@@ -91,14 +98,70 @@ int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
 		NumPoint goalN = goalEle.at(i);
 		
 		sum += numMoves() + (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
-		
-		std::cout << goalN.num << " " << (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y)) << std::endl;
 	}
 	
 	// Formula is D(C) = A(C) + E(C)
 	// in other words
 	// Manhattan_Distance = (Moves needed/moves already taken) + (sum of distance of all displaced tiles to their target)
 	return sum;
+}
+
+// This function will initiate A* Search
+void Sliding_Solver::Solve_Puzzle() {
+	std::stack<Board_Tile> boardStack;
+	
+	Board_Tile tile = tileQueue.top();
+	tileQueue.pop();
+	
+	
+}
+
+// Main
+int main() {
+	std::cout << "Introduction\n";
+	std::cout << std::endl;
+	
+	std::string input = "";
+	bool stop = false;
+	
+	Board_Tile initBt;
+	Board_Tile goalBt;
+	
+	// First Prompt
+	while(!stop) {
+		std::cout << "Please enter an initial 3x3 configuration: ";
+		std::getline(std::cin, input);
+		
+		if(input == "Q" || input == "q") {
+			stop = true;
+			return 0;
+		} else {
+			Board_Tile tempBt(input);
+			initBt = tempBt;
+			stop = true;
+		}
+	}
+	
+	stop = false;
+	
+	// Second Prompt
+	while(!stop) {
+		std::cout << "Please enter a goal 3x3 configuration: ";
+		std::getline(std::cin, input);
+		
+		if(input == "Q" || input == "q") {
+			stop = true;
+			return 0;
+		} else {
+			Board_Tile tempBt(input);
+			goalBt = tempBt;
+			stop = true;
+		}
+	}
+	
+	std::cout << "Processing..." << std::endl;
+	
+	return 0;
 }
 
 // Extra functions
@@ -169,6 +232,7 @@ void Board_Tile::move(char direction) {
 	elements[0] = zeroN;
 	elements[std::stoi(targetElement)] = targetN;
 	numOfMoves++;
+	movesFromStart += direction;
 }
 
 std::string Board_Tile::getMoves() {
@@ -191,61 +255,9 @@ std::string Board_Tile::getCurrentConfigString() {
 	return currentConfig;
 }
 
-void Board_Tile::setMoves(int m) {
-	numOfMove = m;
-}
-
-int main() {
-	std::cout << "Introduction\n";
-	std::cout << std::endl;
-	
-	std::string input = "";
-	bool stop = false;
-	
-	Board_Tile initBt;
-	Board_Tile goalBt;
-	
-	// First Prompt
-	while(!stop) {
-		std::cout << "Please enter an initial 3x3 configuration: ";
-		std::getline(std::cin, input);
-		
-		if(input == "Q" || input == "q") {
-			stop = true;
-			return 0;
-		} else {
-			Board_Tile tempBt(input);
-			initBt = tempBt;
-			stop = true;
-		}
-	}
-	
-	stop = false;
-	
-	// Second Prompt
-	while(!stop) {
-		std::cout << "Please enter a goal 3x3 configuration: ";
-		std::getline(std::cin, input);
-		
-		if(input == "Q" || input == "q") {
-			stop = true;
-			return 0;
-		} else {
-			Board_Tile tempBt(input);
-			goalBt = tempBt;
-			stop = true;
-		}
-	}
-	
-	std::cout << "Processing..." << std::endl;
-	std::vector<Board_Tile> result = initBt.nextConfigs();
-	
-	for(int i = 0; i < result.size(); i++) {
-		Board_Tile t = result.at(i);
-		std::cout << t.getCurrentConfigString() << std::endl;
-	}
-	
-	return 0;
+void Board_Tile::setMoves(int numM, std::string m) {
+	numOfMoves = numM;
+	movesFromStart = m;
 }
 
 std::vector<std::string> StringMagician::extractInts(const std::string str) {
