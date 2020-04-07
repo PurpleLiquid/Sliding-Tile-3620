@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <exception>
-#include <stack>
 #include <queue>
 #include <iterator>
 #include <algorithm>
@@ -49,7 +48,7 @@ int Board_Tile::numMoves() {
 }
 
 std::vector<Board_Tile> Board_Tile::nextConfigs() {
-	// Will check for possible moves
+	// Should get 0 tile
 	NumPoint blankPoint = elements.at(0);
 	
 	int initX = blankPoint.x;
@@ -78,6 +77,7 @@ std::vector<Board_Tile> Board_Tile::nextConfigs() {
 		availableMoves = "UDRL"; // unrestricted
 	}
 	
+	// Make all possible moves
 	std::vector<Board_Tile> possibleMoves;
 	for(int i = 0; i < availableMoves.size(); i++) {
 		Board_Tile possibleConfig(getCurrentConfigString());
@@ -87,18 +87,21 @@ std::vector<Board_Tile> Board_Tile::nextConfigs() {
 	}
 	
 	return possibleMoves;
-} 
+}
 
 int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
 	std::vector<NumPoint> goalEle = goalconfig.elements;
 	int sum = 0;
 	
+	// Go through all elements of configuration excluding 0
 	for(int i = 1; i < 9; i++) {
 		NumPoint initN = elements.at(i);
 		NumPoint goalN = goalEle.at(i);
 		
-		sum += numMoves() + (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
+		sum += (std::abs(initN.x - goalN.x) + std::abs(initN.y - goalN.y));
 	}
+	
+	sum += numMoves();
 	
 	// Formula is D(C) = A(C) + E(C)
 	// in other words
@@ -107,13 +110,48 @@ int Board_Tile::Manhattan_Distance(const Board_Tile& goalconfig) {
 }
 
 // This function will initiate A* Search
-void Sliding_Solver::Solve_Puzzle() {
-	std::stack<Board_Tile> boardStack;
+bool Sliding_Solver::Solve_Puzzle(Board_Tile goalConfig) {
+	bool firstDone = false;
+	Board_Tile lastAttempt;
 	
-	Board_Tile tile = tileQueue.top();
-	tileQueue.pop();
+	while(tileQueue.empty() == false) {
+		Board_Tile config = tileQueue.top();
+		lastAttempt = config;
+		tileQueue.pop();
+		
+		if(!firstDone) {
+			config.dScore = config.Manhattan_Distance(goalConfig);
+			firstDone = true;
+		}
+		
+		if(config == goalConfig) {
+			std::cout << "Solution found!!\n";
+			std::cout << "Number of moves needed: " << config.numMoves() << std::endl;
+			std::cout << "Moves taken: " << config.getMoves() << std::endl;
+			
+			return true;
+		}
+		
+		int mDistance = config.Manhattan_Distance(goalConfig);
+		
+		std::vector<Board_Tile> nextConf = config.nextConfigs();
+		for(int i = 0; i < nextConf.size(); i++) {
+			Board_Tile nextTile = nextConf.at(i);
+			int nextMDistance = nextTile.Manhattan_Distance(goalConfig);
+			nextTile.dScore = nextMDistance;
+			
+			if((nextTile.dScore <= config.dScore && Sliding_Solver::excludeRepeat(nextTile))) {
+				tileQueue.push(nextTile);
+			}
+		}
+	}
 	
-	
+	// No solution found
+	std::cout << "No Solution found...\n";
+	std::cout << "Displaying best attempt\n";
+	std::cout << "Number of moves made: " << lastAttempt.numMoves() << std::endl;
+	std::cout << "Moves taken: " << lastAttempt.getMoves() << std::endl;
+	return false;
 }
 
 // Main
@@ -124,7 +162,7 @@ int main() {
 	std::string input = "";
 	bool stop = false;
 	
-	Board_Tile initBt;
+	Sliding_Solver ss;
 	Board_Tile goalBt;
 	
 	// First Prompt
@@ -136,8 +174,8 @@ int main() {
 			stop = true;
 			return 0;
 		} else {
-			Board_Tile tempBt(input);
-			initBt = tempBt;
+			Sliding_Solver temp(input);
+			ss = temp;
 			stop = true;
 		}
 	}
@@ -160,13 +198,35 @@ int main() {
 	}
 	
 	std::cout << "Processing..." << std::endl;
+	ss.Solve_Puzzle(goalBt);
 	
 	return 0;
 }
 
 // Extra functions
+bool Sliding_Solver::excludeRepeat(Board_Tile config) {
+	int configSize = config.getMoves().size();
+	
+	if(configSize >= 2) {
+		char lastMove = config.getMoves().at(configSize - 2);
+		char currentMove = config.getMoves().at(configSize - 1);
+		
+		if(lastMove == 'U' && currentMove == 'D') {
+			return false;
+		} else if(lastMove == 'R' && currentMove == 'L') {
+			return false;
+		} else if(lastMove == 'L' && currentMove == 'R') {
+			return false;
+		} else if(lastMove == 'D' && currentMove == 'U') {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 void Board_Tile::move(char direction) {
-	// Should be zero
+	// Should be the 0 tile
 	NumPoint blankPoint = elements.at(0);
 	
 	int initX = blankPoint.x;
@@ -216,7 +276,7 @@ void Board_Tile::move(char direction) {
 	config[targetY][targetX] = "0";
 	config[initY][initX] = targetElement;
 	
-	// Re-add to priority_queue
+	// Re-add to list
 	NumPoint zeroN = {
 		.num = 0,
 		.x = targetX,

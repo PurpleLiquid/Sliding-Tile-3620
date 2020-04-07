@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <exception>
-#include <stack>
 #include <queue>
 #include <iterator>
 #include <algorithm>
@@ -54,6 +53,26 @@ class Board_Tile {
 		std::string getMoves();
 		std::string getCurrentConfigString();
 		void move(char direction);
+		bool operator==(Board_Tile & otherConfig) {
+			for(int i = 0; i < 9; i++) {
+				NumPoint n1 = elements.at(i);
+				NumPoint n2 = otherConfig.elements.at(i);
+				
+				if((n1.num == n2.num) == false) {
+					return false;
+				}
+				
+				if((n1.x == n2.x) == false) {
+					return false;
+				}
+				
+				if((n1.y == n2.y) == false) {
+					return false;
+				}
+			}
+			
+			return true;
+		}
 		
 		std::vector<NumPoint> elements;
 		int dScore = 0;
@@ -61,7 +80,6 @@ class Board_Tile {
 	private:
 		std::string config[3][3];
 		std::string movesFromStart = "";
-		
 		int numOfMoves = 0;
 		
 		// add 'U', 'D', 'R', or 'L'
@@ -82,8 +100,10 @@ class Sliding_Solver {
 		virtual ~Sliding_Solver() {}
 		Sliding_Solver(const std::string& str);
 		
-		void Solve_Puzzle();
+		bool Solve_Puzzle(Board_Tile goalconfig);
 		
 	private:
 		std::priority_queue<Board_Tile, std::vector<Board_Tile>, CompareConfig> tileQueue;
+		
+		bool excludeRepeat(Board_Tile config);
 };
